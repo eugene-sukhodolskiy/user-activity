@@ -161,7 +161,24 @@ class UserActivity extends \Extensions\Model{
 			'total' => array_sum($activity_periods_times)
 		];
 
+		if($user_id === false){
+			$data['unique_users'] = ['unique_users_list' => [], 'total_unique_users' => []];
+			$data['unique_users']['unique_users_list'] = $this -> detect_unique_users($activity);
+			$data['unique_users']['total_unique_users'] = count($data['unique_users']['unique_users_list']);
+		}
+
 		return $data;
+	}
+
+	private function detect_unique_users($general_activity){
+		$unique_users = [];
+		foreach($general_activity as $i => $item){
+			if(array_search($item -> user_id, $unique_users) !== false)
+				continue;
+			$unique_users[] = $item -> user_id;
+		}
+
+		return $unique_users;
 	}
 
 	private function split_into_periods($activity_list){
