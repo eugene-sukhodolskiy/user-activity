@@ -64,4 +64,8 @@ class UserActivity{
 		return \Modules\UserActivity\Models\UserActivity::ins() -> online_list();
 	}
 
+	public function get_user_absolute_activity($user_id, $time_offset, $time_period){
+		return \Modules\UserActivity\Models\UserActivity::ins() -> get_user_absolute_activity($user_id, $time_offset, $time_period);
+	}
+
 }

@@ -10,6 +10,14 @@ class UserActivity extends \Extensions\Model{
 		return [];
 	}
 
+	/**
+	 * Добавление новой активности пользователя, в основном не требует вызова. Работает по событию
+	 *
+	 * @method set_activity
+	 *
+	 * @param  [int] $user_id Идентификатор пользователя
+	 * @param  [boolean] $action Флаг успешности добавления, в случае успешного добавления, будет возвращён id записи
+	 */
 	public function set_activity($user_id, $action){
 		$data = [
 			'browser' => getBrowser($_SERVER['HTTP_USER_AGENT']),
@@ -51,6 +59,15 @@ class UserActivity extends \Extensions\Model{
 		return $this -> get(compact('where', 'order'));
 	}
 
+	/**
+	 * Стату пользователя, Онлайн или Оффлайн
+	 *
+	 * @method get_activity_status
+	 *
+	 * @param  [int] $user_id Идентификатор пользователя
+	 *
+	 * @return [boolean] Флаг активности
+	 */
 	public function get_activity_status($user_id){
 		$user_online_condition_per_second = module('UserActivity') -> user_online_condition * 60;
 		$user_online_condition_per_second_str = date('Y-m-d H:i:s', time() - $user_online_condition_per_second);
@@ -67,10 +84,26 @@ class UserActivity extends \Extensions\Model{
 		return true;
 	}
 
+	/**
+	 * Получить последнюю запись об активности пользователя
+	 *
+	 * @method get_last_activity
+	 *
+	 * @param  [int] $user_id Идентификатор пользователя
+	 *
+	 * @return [object] Объект записи
+	 */
 	public function get_last_activity($user_id){
 		return $this -> one() -> user_id($user_id);
 	}
 
+	/**
+	 * Общее количество пользователей онлайн
+	 *
+	 * @method total_online
+	 *
+	 * @return [int] Количество пользователей онлайн
+	 */
 	public function total_online(){
 		$user_online_condition_per_second = module('UserActivity') -> user_online_condition * 60;
 		$user_online_condition_per_second_str = date('Y-m-d H:i:s', time() - $user_online_condition_per_second);
@@ -81,6 +114,13 @@ class UserActivity extends \Extensions\Model{
 		return $result[0]['COUNT(DISTINCT `user_id`)'];
 	}
 
+	/**
+	 * Метод для получения списка пользователей онлайн
+	 *
+	 * @method online_list
+	 *
+	 * @return [array] возвращает список пользователей, каждый пользователь представлен в виде объекта
+	 */
 	public function online_list(){
 		$user_online_condition_per_second = module('UserActivity') -> user_online_condition * 60;
 		$user_online_condition_per_second_str = date('Y-m-d H:i:s', time() - $user_online_condition_per_second);
@@ -91,6 +131,57 @@ class UserActivity extends \Extensions\Model{
 		}
 		
 		return $result;
+	}
+
+	/**
+	 * Анализ активности отдельно взятого пользователя, за выбранный период
+	 *
+	 * @method get_user_absolute_activity
+	 *
+	 * @param  [int] $user_id [description]
+	 * @param  [int] $time_offset сдвиг в прошлое на указанное количество минут
+	 * @param  [int] $time_period количество времени за которое нужен анализ, в минутах
+	 *
+	 * @return [array] Ассоциативный массив с результатами анализа, многоуровневый. Все значения в секундах для точности
+	 */
+	public function get_user_absolute_activity($user_id, $time_offset, $time_period){
+		$activity = $this -> get_activity($user_id, $time_offset, $time_period);
+		$activity_periods = $this -> split_into_periods($activity);
+		$activity_periods_times = $this -> period_time($activity_periods);
+		$data = [
+			'activity_list' => $activity,
+			'periods' => [
+				'items' => $activity_periods,
+				'times' => $activity_periods_times
+			],
+			'total' => array_sum($activity_periods_times)
+		];
+
+		return $data;
+	}
+
+	private function split_into_periods($activity_list){
+		$user_online_condition_per_second = module('UserActivity') -> user_online_condition * 60;
+		$periods = [];
+		$pinx = 0;
+		$activity_list_count = count($activity_list);
+		for($i=1; $i<$activity_list_count; $i++){
+			$periods[$pinx][] = $activity_list[$i-1];
+			if(strtotime($activity_list[$i-1] -> date_of_create) - strtotime($activity_list[$i] -> date_of_create) > $user_online_condition_per_second){
+				$pinx++;
+			}
+		}
+
+		return $periods;
+	}
+
+	private function period_time($periods){
+		$results = [];
+		foreach($periods as $period){
+			$results[] = strtotime($period[0] -> date_of_create) - strtotime($period[count($period) - 1] -> date_of_create);
+		}
+
+		return $results;
 	}
 
 }
