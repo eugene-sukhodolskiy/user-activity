@@ -68,4 +68,8 @@ class UserActivity{
 		return \Modules\UserActivity\Models\UserActivity::ins() -> get_user_absolute_activity($user_id, $time_offset, $time_period);
 	}
 
+	public function get_general_absolute_activity($time_offset, $time_period){
+		return \Modules\UserActivity\Models\UserActivity::ins() -> get_general_absolute_activity($time_offset, $time_period);
+	}
+
 }

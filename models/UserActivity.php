@@ -47,12 +47,16 @@ class UserActivity extends \Extensions\Model{
 		$time_offset_str = date('Y-m-d H:i:s', $time_offset_per_second);
 		$time_period_str = date('Y-m-d H:i:s', $time_offset_per_second + ($time_period * 60 * 60 * 24));
 		$where = [
-			'user_id', '=', $user_id,
-			'AND',
 			'date_of_create', '>', $time_offset_str,
 			'AND',
 			'date_of_create', '<', $time_period_str,
 		];
+
+		if($user_id !== false){
+			$where = array_merge($where, ['AND', 'user_id', '=', $user_id]);
+		}else{
+			$where = array_merge($where, ['AND', 'user_id', '<>', '0']);
+		}
 
 		$order = ['id', 'DESC'];
 
@@ -107,7 +111,7 @@ class UserActivity extends \Extensions\Model{
 	public function total_online(){
 		$user_online_condition_per_second = module('UserActivity') -> user_online_condition * 60;
 		$user_online_condition_per_second_str = date('Y-m-d H:i:s', time() - $user_online_condition_per_second);
-		$sql_query_str = "SELECT COUNT(DISTINCT `user_id`) FROM `{$this -> table}` WHERE `date_of_create` > '{$user_online_condition_per_second_str}'";
+		$sql_query_str = "SELECT COUNT(DISTINCT `user_id`) FROM `{$this -> table}` WHERE `date_of_create` > '{$user_online_condition_per_second_str}' AND `user_id` <> '0'";
 
 		$result = $this -> q($sql_query_str);
 
@@ -182,6 +186,10 @@ class UserActivity extends \Extensions\Model{
 		}
 
 		return $results;
+	}
+
+	public function get_general_absolute_activity($time_offset, $time_period){
+		return $this -> get_user_absolute_activity(false, $time_offset, $time_period);
 	}
 
 }
