@@ -170,6 +170,15 @@ class UserActivity extends \Extensions\Model{
 		return $data;
 	}
 
+	/**
+	 * Служебный метод для нахождения записей с уникальными id пользователя
+	 *
+	 * @method detect_unique_users
+	 *
+	 * @param  [array] $general_activity массив с активностями
+	 *
+	 * @return [array] масив с уникальными пользователями
+	 */
 	private function detect_unique_users($general_activity){
 		$unique_users = [];
 		foreach($general_activity as $i => $item){
@@ -181,6 +190,15 @@ class UserActivity extends \Extensions\Model{
 		return $unique_users;
 	}
 
+	/**
+	 * Служебный метод для разделения активностей на периоды
+	 *
+	 * @method split_into_periods
+	 *
+	 * @param  [array] $activity_list Массив с активностями
+	 *
+	 * @return [array] Результирующий массив с активностями разделёнными на периоды
+	 */
 	private function split_into_periods($activity_list){
 		$user_online_condition_per_second = module('UserActivity') -> user_online_condition * 60;
 		$periods = [];
@@ -196,6 +214,15 @@ class UserActivity extends \Extensions\Model{
 		return $periods;
 	}
 
+	/**
+	 * Служебный метод. Формирование списка периодов на основе списка периодов активностей
+	 *
+	 * @method period_time
+	 *
+	 * @param  [array] $periods
+	 *
+	 * @return [array] 
+	 */
 	private function period_time($periods){
 		$results = [];
 		foreach($periods as $period){
@@ -205,6 +232,16 @@ class UserActivity extends \Extensions\Model{
 		return $results;
 	}
 
+	/**
+	 * Определение глобальной активности, с привязкой ко времени и в абсолютных значениях
+	 *
+	 * @method get_general_absolute_activity
+	 *
+	 * @param  [int] $time_offset Временной отступ в днях
+	 * @param  [int] $time_period Временной период в днях
+	 *
+	 * @return [array] Список активностей
+	 */
 	public function get_general_absolute_activity($time_offset, $time_period){
 		return $this -> get_user_absolute_activity(false, $time_offset, $time_period);
 	}
